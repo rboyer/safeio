@@ -1,12 +1,9 @@
-// Copyright (c) 2015 - Richard Boyer. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can
-// be found in the LICENSE file.
+// Copyright (c) 2016 - Richard Boyer. All rights reserved.  Use of this
+// source code is governed by a BSD-style license that can be found in
+// the LICENSE file.
 
-/*
-Package safeio provides functions to perform atomic, fsync-safe disk
-operations.
-
-*/
+// Package safeio provides functions to perform atomic, fsync-safe disk
+// operations.
 package safeio
 
 import (
