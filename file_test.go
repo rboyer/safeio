@@ -11,172 +11,163 @@ import (
 )
 
 func TestOpenFile_ok(t *testing.T) {
-	doTest(t, func(tmpDir string) {
-		name := filepath.Join(tmpDir, "test1.txt")
-		mode := os.FileMode(0644)
+	tmpDir, err := ioutil.TempDir("", "safeio")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
 
-		f, err := OpenFile(name, mode)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer f.Close() // to prevent leaks
+	name := filepath.Join(tmpDir, "test1.txt")
+	mode := os.FileMode(0644)
 
-		data := []byte("hello world\n")
+	f, err := OpenFile(name, mode)
+	require.NoError(t, err)
+	defer f.Close() // to prevent leaks
 
-		n, err := f.Write(data)
-		require.NoError(t, err)
-		require.Equal(t, 12, n)
+	data := []byte("hello world\n")
 
-		err = f.Commit()
-		require.NoError(t, err)
+	n, err := f.Write(data)
+	require.NoError(t, err)
+	require.Equal(t, 12, n)
 
-		err = f.Close()
-		require.NoError(t, err)
+	err = f.Commit()
+	require.NoError(t, err)
 
-		// verify
+	err = f.Close()
+	require.NoError(t, err)
 
-		read, err := ioutil.ReadFile(name)
-		require.NoError(t, err)
-		require.Equal(t, data, read)
+	// verify
 
-		fi, err := os.Stat(name)
-		require.NoError(t, err)
-		require.Equal(t, mode, fi.Mode().Perm())
+	read, err := ioutil.ReadFile(name)
+	require.NoError(t, err)
+	require.Equal(t, data, read)
 
-		// this was the only file
+	fi, err := os.Stat(name)
+	require.NoError(t, err)
+	require.Equal(t, mode, fi.Mode().Perm())
 
-		list, err := ioutil.ReadDir(tmpDir)
-		require.NoError(t, err)
-		require.Equal(t, 1, len(list))
-	})
+	// this was the only file
+
+	list, err := ioutil.ReadDir(tmpDir)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(list))
 }
 
 func TestOpenFile_elective_abort(t *testing.T) {
-	doTest(t, func(tmpDir string) {
-		name := filepath.Join(tmpDir, "test1.txt")
-		mode := os.FileMode(0644)
+	tmpDir, err := ioutil.TempDir("", "safeio")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
 
-		f, err := OpenFile(name, mode)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer f.Close() // to prevent leaks
+	name := filepath.Join(tmpDir, "test1.txt")
+	mode := os.FileMode(0644)
 
-		data := []byte("hello world\n")
+	f, err := OpenFile(name, mode)
+	require.NoError(t, err)
+	defer f.Close() // to prevent leaks
 
-		n, err := f.Write(data)
-		require.NoError(t, err)
-		require.Equal(t, 12, n)
+	data := []byte("hello world\n")
 
-		// no commit
+	n, err := f.Write(data)
+	require.NoError(t, err)
+	require.Equal(t, 12, n)
 
-		err = f.Close()
-		require.NoError(t, err)
+	// no commit
 
-		// verify
+	err = f.Close()
+	require.NoError(t, err)
 
-		_, err = ioutil.ReadFile(name)
-		require.True(t, os.IsNotExist(err))
+	// verify
 
-		// no files
+	_, err = ioutil.ReadFile(name)
+	require.True(t, os.IsNotExist(err))
 
-		list, err := ioutil.ReadDir(tmpDir)
-		require.NoError(t, err)
-		require.Equal(t, 0, len(list))
-	})
+	// no files
+
+	list, err := ioutil.ReadDir(tmpDir)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(list))
 }
 
 var testErrDiskBroke = errors.New("disk broke!")
 
 func TestOpenFile_writeErrorOnCommit_abort(t *testing.T) {
-	doTest(t, func(tmpDir string) {
-		name := filepath.Join(tmpDir, "test1.txt")
-		mode := os.FileMode(0644)
+	tmpDir, err := ioutil.TempDir("", "safeio")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
 
-		f, err := OpenFile(name, mode)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer f.Close() // to prevent leaks
+	name := filepath.Join(tmpDir, "test1.txt")
+	mode := os.FileMode(0644)
 
-		data := []byte("hello world\n")
+	f, err := OpenFile(name, mode)
+	require.NoError(t, err)
+	defer f.Close() // to prevent leaks
 
-		n, err := f.Write(data)
-		require.NoError(t, err)
-		require.Equal(t, 12, n)
+	data := []byte("hello world\n")
 
-		// simulate disk wonkiness
-		f.setErr(testErrDiskBroke)
+	n, err := f.Write(data)
+	require.NoError(t, err)
+	require.Equal(t, 12, n)
 
-		err = f.Commit()
-		require.Equal(t, testErrDiskBroke, err)
+	// simulate disk wonkiness
+	f.setErr(testErrDiskBroke)
 
-		err = f.Close()
-		require.Equal(t, testErrDiskBroke, err)
+	err = f.Commit()
+	require.Equal(t, testErrDiskBroke, err)
 
-		// verify
+	err = f.Close()
+	require.Equal(t, testErrDiskBroke, err)
 
-		_, err = ioutil.ReadFile(name)
-		require.True(t, os.IsNotExist(err))
+	// verify
 
-		// no files
+	_, err = ioutil.ReadFile(name)
+	require.True(t, os.IsNotExist(err))
 
-		list, err := ioutil.ReadDir(tmpDir)
-		require.NoError(t, err)
-		require.Equal(t, 0, len(list))
-	})
+	// no files
+
+	list, err := ioutil.ReadDir(tmpDir)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(list))
 }
 
 func TestOpenFile_writeErrorOnWrite_abort(t *testing.T) {
-	doTest(t, func(tmpDir string) {
-		name := filepath.Join(tmpDir, "test1.txt")
-		mode := os.FileMode(0644)
-
-		f, err := OpenFile(name, mode)
-		if err != nil {
-			t.Fatal(err)
-		}
-		defer f.Close() // to prevent leaks
-
-		data := []byte("hello world\n")
-
-		// write half before the error
-		n, err := f.Write(data[0:6])
-		require.NoError(t, err)
-		require.Equal(t, 6, n)
-
-		// simulate disk wonkiness
-		f.setErr(testErrDiskBroke)
-
-		// and try to write half after the error
-		n, err = f.Write(data[6:])
-		require.Equal(t, testErrDiskBroke, err)
-		require.Equal(t, 0, n)
-
-		err = f.Commit()
-		require.Equal(t, testErrDiskBroke, err)
-
-		err = f.Close()
-		require.Equal(t, testErrDiskBroke, err)
-
-		// verify
-
-		_, err = ioutil.ReadFile(name)
-		require.True(t, os.IsNotExist(err))
-
-		// no files
-
-		list, err := ioutil.ReadDir(tmpDir)
-		require.NoError(t, err)
-		require.Equal(t, 0, len(list))
-	})
-}
-
-func doTest(t *testing.T, f func(tmpDir string)) {
 	tmpDir, err := ioutil.TempDir("", "safeio")
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
-	f(tmpDir)
+
+	name := filepath.Join(tmpDir, "test1.txt")
+	mode := os.FileMode(0644)
+
+	f, err := OpenFile(name, mode)
+	require.NoError(t, err)
+	defer f.Close() // to prevent leaks
+
+	data := []byte("hello world\n")
+
+	// write half before the error
+	n, err := f.Write(data[0:6])
+	require.NoError(t, err)
+	require.Equal(t, 6, n)
+
+	// simulate disk wonkiness
+	f.setErr(testErrDiskBroke)
+
+	// and try to write half after the error
+	n, err = f.Write(data[6:])
+	require.Equal(t, testErrDiskBroke, err)
+	require.Equal(t, 0, n)
+
+	err = f.Commit()
+	require.Equal(t, testErrDiskBroke, err)
+
+	err = f.Close()
+	require.Equal(t, testErrDiskBroke, err)
+
+	// verify
+
+	_, err = ioutil.ReadFile(name)
+	require.True(t, os.IsNotExist(err))
+
+	// no files
+
+	list, err := ioutil.ReadDir(tmpDir)
+	require.NoError(t, err)
+	require.Equal(t, 0, len(list))
 }
