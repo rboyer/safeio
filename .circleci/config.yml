@@ -2,7 +2,7 @@ version: 2.1
 
 references:
   images:
-    go: &GOLANG_IMAGE circleci/golang:1.15.3
+    go: &GOLANG_IMAGE circleci/golang:1.19.4
 
 # reusable 'executor' object for jobs
 executors:
