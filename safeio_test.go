@@ -3,7 +3,6 @@ package safeio
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -12,7 +11,7 @@ import (
 )
 
 func TestWriteToFile_ok(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "safeio")
+	tmpDir, err := os.MkdirTemp("", "safeio")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
@@ -27,7 +26,7 @@ func TestWriteToFile_ok(t *testing.T) {
 
 	// verify
 
-	read, err := ioutil.ReadFile(name)
+	read, err := os.ReadFile(name)
 	require.NoError(t, err)
 	require.Equal(t, data, read)
 
@@ -37,13 +36,13 @@ func TestWriteToFile_ok(t *testing.T) {
 
 	// this was the only file
 
-	list, err := ioutil.ReadDir(tmpDir)
+	list, err := os.ReadDir(tmpDir)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(list))
 }
 
 func TestWriteToFile_sourceFails(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "safeio")
+	tmpDir, err := os.MkdirTemp("", "safeio")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
@@ -59,12 +58,12 @@ func TestWriteToFile_sourceFails(t *testing.T) {
 	require.Equal(t, testErrDiskBroke, err)
 
 	// verify
-	_, err = ioutil.ReadFile(name)
+	_, err = os.ReadFile(name)
 	require.True(t, os.IsNotExist(err))
 
 	// no files
 
-	list, err := ioutil.ReadDir(tmpDir)
+	list, err := os.ReadDir(tmpDir)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(list))
 }
