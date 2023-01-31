@@ -2,7 +2,6 @@ package safeio
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,7 +10,7 @@ import (
 )
 
 func TestOpenFile_ok(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "safeio")
+	tmpDir, err := os.MkdirTemp("", "safeio")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
@@ -36,7 +35,7 @@ func TestOpenFile_ok(t *testing.T) {
 
 	// verify
 
-	read, err := ioutil.ReadFile(name)
+	read, err := os.ReadFile(name)
 	require.NoError(t, err)
 	require.Equal(t, data, read)
 
@@ -46,13 +45,13 @@ func TestOpenFile_ok(t *testing.T) {
 
 	// this was the only file
 
-	list, err := ioutil.ReadDir(tmpDir)
+	list, err := os.ReadDir(tmpDir)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(list))
 }
 
 func TestOpenFile_elective_abort(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "safeio")
+	tmpDir, err := os.MkdirTemp("", "safeio")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
@@ -76,12 +75,12 @@ func TestOpenFile_elective_abort(t *testing.T) {
 
 	// verify
 
-	_, err = ioutil.ReadFile(name)
+	_, err = os.ReadFile(name)
 	require.True(t, os.IsNotExist(err))
 
 	// no files
 
-	list, err := ioutil.ReadDir(tmpDir)
+	list, err := os.ReadDir(tmpDir)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(list))
 }
@@ -89,7 +88,7 @@ func TestOpenFile_elective_abort(t *testing.T) {
 var testErrDiskBroke = errors.New("disk broke!")
 
 func TestOpenFile_writeErrorOnCommit_abort(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "safeio")
+	tmpDir, err := os.MkdirTemp("", "safeio")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
@@ -117,18 +116,18 @@ func TestOpenFile_writeErrorOnCommit_abort(t *testing.T) {
 
 	// verify
 
-	_, err = ioutil.ReadFile(name)
+	_, err = os.ReadFile(name)
 	require.True(t, os.IsNotExist(err))
 
 	// no files
 
-	list, err := ioutil.ReadDir(tmpDir)
+	list, err := os.ReadDir(tmpDir)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(list))
 }
 
 func TestOpenFile_writeErrorOnWrite_abort(t *testing.T) {
-	tmpDir, err := ioutil.TempDir("", "safeio")
+	tmpDir, err := os.MkdirTemp("", "safeio")
 	require.NoError(t, err)
 	defer os.RemoveAll(tmpDir)
 
@@ -162,12 +161,12 @@ func TestOpenFile_writeErrorOnWrite_abort(t *testing.T) {
 
 	// verify
 
-	_, err = ioutil.ReadFile(name)
+	_, err = os.ReadFile(name)
 	require.True(t, os.IsNotExist(err))
 
 	// no files
 
-	list, err := ioutil.ReadDir(tmpDir)
+	list, err := os.ReadDir(tmpDir)
 	require.NoError(t, err)
 	require.Equal(t, 0, len(list))
 }

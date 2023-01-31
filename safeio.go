@@ -4,7 +4,6 @@ package safeio
 
 import (
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -27,7 +26,7 @@ func writeToTempFile(src io.Reader, path string, perm os.FileMode) (tempName str
 	dir := filepath.Dir(path)
 	name := filepath.Base(path)
 
-	f, err := ioutil.TempFile(dir, name+".tmp")
+	f, err := os.CreateTemp(dir, name+".tmp")
 	if err != nil {
 		return "", 0, err
 	}
