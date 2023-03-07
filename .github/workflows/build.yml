@@ -2,27 +2,64 @@ name: safeio
 
 on:
   push:
-    branches:
-      main
   pull_request:
+
+env:
+  GO_VERSION: '1.20'
+
+# This workflow runs for not-yet-reviewed external contributions and so it
+# intentionally has no write access and only limited read access to the
+# repository.
+permissions:
+  contents: read
 
 jobs:
   unit-tests:
-    name: unit-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: '1.19'
+          go-version: ${{env.GO_VERSION}}
+          check-latest: true
+          cache: true
+
       - run: go test ./...
-  golangci:
-    name: lint
+      - run: go test ./... -race
+
+  lint:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: 1.19
-      - uses: actions/checkout@v3
+          go-version: ${{env.GO_VERSION}}
+          check-latest: true
+          cache: true
+
+      - name: "go fmt check"
+        shell: bash
+        run: |
+          files=$(go fmt ./...)
+          if [ -n "$files" ]; then
+            echo "The following file(s) do not conform to go fmt:"
+            echo "$files"
+            exit 1
+          fi
+
+      - name: "go vet"
+        shell: bash
+        run: |
+          go vet ./...
+
+      - name: "go.mod and go.sum consistency check"
+        shell: bash
+        run: |
+          go mod tidy
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo >&2 "ERROR: go.mod/go.sum are not up-to-date. Run 'go mod tidy' and then commit the updated files."
+            exit 1
+          fi
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
