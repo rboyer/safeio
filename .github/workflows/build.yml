@@ -1,8 +1,6 @@
 name: safeio
 
-on:
-  push:
-  pull_request:
+on: [workflow_dispatch, push]
 
 env:
   GO_VERSION: '1.20'
