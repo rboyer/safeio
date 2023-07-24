@@ -86,6 +86,8 @@ func Rename(oldname, newname string) error {
 }
 
 func syncParentDir(name string) error {
+	// Skipping sync dir for windows
+	// because it is not supported.
 	if runtime.GOOS == "windows" {
 		return nil
 	}
