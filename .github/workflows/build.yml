@@ -1,6 +1,13 @@
 name: safeio
 
-on: [workflow_dispatch, push]
+on:
+  pull_request:
+
+# This workflow runs for not-yet-reviewed external contributions and so it
+# intentionally has no write access and only limited read access to the
+# repository.
+permissions:
+  contents: read
 
 env:
   GO_VERSION: '1.20'
