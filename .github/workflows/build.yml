@@ -12,12 +12,6 @@ permissions:
 env:
   GO_VERSION: '1.20'
 
-# This workflow runs for not-yet-reviewed external contributions and so it
-# intentionally has no write access and only limited read access to the
-# repository.
-permissions:
-  contents: read
-
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
