@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 // WriteToFile consumes the provided io.Reader and writes it to a temp
@@ -85,6 +86,11 @@ func Rename(oldname, newname string) error {
 }
 
 func syncParentDir(name string) error {
+	// Skipping sync dir for windows
+	// because it is not supported.
+	if runtime.GOOS == "windows" {
+		return nil
+	}
 	f, err := os.Open(filepath.Dir(name))
 	if err != nil {
 		return err
